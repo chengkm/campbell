@@ -1,0 +1,574 @@
+Public end_symbol As String * 5, end_symbol_month As String * 10
+Public PTemp, Batt_volt
+Dim n,j,c,m,nn,jj
+Public Rain
+Units Rain=mm
+Public P
+Units P=hPa
+
+Public SoilT(9)
+Units SoilT()=DegC
+Alias SoilT(1)=SoilT_0cm :Alias SoilT(2)=SoilT_5cm :Alias SoilT(3)=SoilT_10cm :Alias SoilT(4)=SoilT_15cm:Alias SoilT(5)=SoilT_20cm:Alias SoilT(6)=SoilT_40cm:Alias SoilT(7)=SoilT_80cm:Alias SoilT(8)=SoilT_160cm:Alias SoilT(9)=SoilT_320cm
+
+Public WD(7)
+Units WD()=Deg
+Alias WD(1)=WD_1_5m :Alias WD(2)=WD_10m :Alias WD(3)=WD_20m :Alias WD(4)=WD_30m :Alias WD(5)=WD_40m :Alias WD(6)=WD_50m :Alias WD(7)=WD_60m
+
+Public WS(7)
+Units WS()=m/s
+Alias WS(1)=WS_1_5m :Alias WS(2)=WS_10m :Alias WS(3)=WS_20m :Alias WS(4)=WS_30m :Alias WS(5)=WS_40m :Alias WS(6)=WS_50m :Alias WS(7)=WS_60m
+
+Public Air_T(7)
+Units Air_T()=DegC
+Alias Air_T(1)=Air_T_1_5m :Alias Air_T(2)=Air_T_10m :Alias Air_T(3)=Air_T_20m :Alias Air_T(4)=Air_T_30m :Alias Air_T(5)=Air_T_40m :Alias Air_T(6)=Air_T_50m :Alias Air_T(7)=Air_T_60m
+
+Public Air_RH(7)
+Units Air_RH()=%
+Alias Air_RH(1)=Air_RH_1_5m :Alias Air_RH(2)=Air_RH_10m :Alias Air_RH(3)=Air_RH_20m :Alias Air_RH(4)=Air_RH_30m :Alias Air_RH(5)=Air_RH_40m :Alias Air_RH(6)=Air_RH_50m :Alias Air_RH(7)=Air_RH_60m
+
+Public Air_e(7)
+Units Air_e()=hPa
+Alias Air_e(1)=Air_e_1_5m :Alias Air_e(2)=Air_e_10m :Alias Air_e(3)=Air_e_20m :Alias Air_e(4)=Air_e_30m :Alias Air_e(5)=Air_e_40m :Alias Air_e(6)=Air_e_50m :Alias Air_e(7)=Air_e_60m
+
+Dim CR As String
+Dim LF As String
+Public IIiii As String             'Station ID
+Dim fTime(9)                         'declare as public and dimension rTime to 9
+Alias fTime(1) = f_LoggerYear          'assign the alias Year to rTime(1)
+Alias fTime(2) = f_LoggerMonth         'assign the alias Month to rTime(2)
+Alias fTime(3) = f_LoggerDOM           'assign the alias DOM to rTime(3)
+Alias fTime(4) = f_LoggerHour          'assign the alias Hour to rTime(4)
+Alias fTime(5) = f_LoggerMinute        'assign the alias Minute to rTime(5)
+Alias fTime(6) = f_LoggerSecond        'assign the alias Second to rTime(6)
+Alias fTime(7) = f_LoggeruSecond       'assign the alias uSecond to rTime(7)
+Alias fTime(8) = f_LoggerWeekDay       'assign the alias WeekDay to rTime(8)
+Alias fTime(9) = f_LoggerDay_of_Year   'assign the alias Day_of_Year to rTime(9)
+Dim LeapYear As Boolean
+Dim LoggerYYYYStr As String
+Dim LoggerMOStr As String,LLoggerMOStr As String
+Dim LoggerDDStr As String,LLoggerDDStr As String
+Dim LoggerHHStr As String
+Dim LoggerMMStr As String
+Dim LoggerSSStr As String
+Public ltimestr(6) As String
+Public MindataFileName As String *50,HourdataFileName As String *50,
+'Public LastMindataFileName As String *50
+Dim Minhandle As Long,Hourhandle As Long
+Dim CloseMinStat,CloseHourStat
+Public MinHeadStr  As String *400,MinStoreStr As String *1000,HourHeadStr  As String *1000,HourStoreStr As String *1000
+Dim StationLongitudeStr As String * 7,StationLatitudeStr As String * 6
+Dim Mindata(62),Hourdata(129),MinStr(62) As String * 30,HourStr(129) As String * 30
+
+DataTable (five_sec,1,-1)
+  DataInterval (0,5,Sec,10)
+  Sample (1,PTemp,FP2)
+  Sample (1,Batt_volt,FP2)
+  Sample (1,P,IEEE4)
+  Sample (7,Air_T(1),IEEE4)
+  Sample (7,Air_RH(1),IEEE4)
+  Sample (7,Air_e(1),IEEE4)
+  Sample (7,WS(1),IEEE4)
+  Sample (7,WD(1),IEEE4)
+  Sample (1,Rain,FP2)
+  Sample (9,SoilT(1),IEEE4)
+EndTable
+DataTable (one_min,1,-1)
+  DataInterval (0,1,Min,10)
+  Sample (1,PTemp,FP2)
+  Sample (1,Batt_volt,FP2)
+  Average (1,P,IEEE4,False)
+  Average (7,Air_T(1),IEEE4,False)
+  Average (7,Air_RH(1),IEEE4,False)
+  Average (7,Air_e(1),IEEE4,False)
+  WindVector (1,WS(1),WD(1),FP2,False,0,0,1)
+  FieldNames("WS_1_5m_WVT,WD_1_5m_WVT")
+  Maximum (1,WS(1),FP2,False,False)
+  SampleMaxMin (1,WD(1),FP2,False)
+  WindVector (1,WS(2),WD(2),FP2,False,0,0,1)
+  FieldNames("WS_10m_WVT,WD_10m_WVT")
+  Maximum (1,WS(2),FP2,False,False)
+  SampleMaxMin (1,WD(2),FP2,False)
+  WindVector (1,WS(3),WD(3),FP2,False,0,0,1)
+  FieldNames("WS_20m_WVT,WD_20m_WVT")
+  Maximum (1,WS(3),FP2,False,False)
+  SampleMaxMin (1,WD(3),FP2,False)
+  WindVector (1,WS(4),WD(4),FP2,False,0,0,1)
+  FieldNames("WS_30m_WVT,WD_30m_WVT")
+  Maximum (1,WS(4),FP2,False,False)
+  SampleMaxMin (1,WD(4),FP2,False)
+  WindVector (1,WS(5),WD(5),FP2,False,0,0,1)
+  FieldNames("WS_40m_WVT,WD_40m_WVT")
+  Maximum (1,WS(5),FP2,False,False)
+  SampleMaxMin (1,WD(5),FP2,False)
+  WindVector (1,WS(6),WD(6),FP2,False,0,0,1)
+  FieldNames("WS_50m_WVT,WD_50m_WVT")
+  Maximum (1,WS(6),FP2,False,False)
+  SampleMaxMin (1,WD(6),FP2,False)
+  WindVector (1,WS(7),WD(7),FP2,False,0,0,1)
+  FieldNames("WS_60m_WVT,WD_60m_WVT")
+  Maximum (1,WS(7),FP2,False,False)
+  SampleMaxMin (1,WD(7),FP2,False)
+  Totalize (1,Rain,FP2,False)
+  Average (9,SoilT(1),IEEE4,False)
+EndTable
+DataTable (halfhour,1,-1)
+  DataInterval (0,30,Min,10)
+  Average (1,PTemp,FP2,False)
+  Minimum (1,Batt_volt,FP2,False,False)
+  Average (1,P,IEEE4,False)
+  Maximum (1,P,IEEE4,False,True)
+  Minimum (1,P,IEEE4,False,True)
+  Average (7,Air_T(1),IEEE4,False)
+  Maximum (7,Air_T(1),IEEE4,False,True)
+  Minimum (7,Air_T(1),IEEE4,False,True)
+  Average (7,Air_RH(1),IEEE4,False)
+  Minimum (7,Air_RH(1),IEEE4,False,True)
+  Average (7,Air_e(1),IEEE4,False)
+  WindVector (1,WS(1),WD(1),FP2,False,0,0,2)
+  FieldNames("WS_1_5m_WVT,WS_1_5m_resultant_WVT,WD_1_5m_WVT,WD_1_5m_Std")
+  Maximum (1,WS(1),FP2,False,True)
+  SampleMaxMin (1,WD(1),FP2,False)
+  WindVector (1,WS(2),WD(2),FP2,False,0,0,2)
+  FieldNames("WS_10m_WVT,WS_10m_resultant_WVT,WD_10m_WVT,WD_10m_Std")
+  Maximum (1,WS(2),FP2,False,True)
+  SampleMaxMin (1,WD(2),FP2,False)
+  WindVector (1,WS(3),WD(3),FP2,False,0,0,2)
+  FieldNames("WS_20m_WVT,WS_20m_resultant_WVT,WD_20m_WVT,WD_20m_Std")
+  Maximum (1,WS(3),FP2,False,True)
+  SampleMaxMin (1,WD(3),FP2,False)
+  WindVector (1,WS(4),WD(4),FP2,False,0,0,2)
+  FieldNames("WS_30m_WVT,WS_30m_resultant_WVT,WD_30m_WVT,WD_30m_Std")
+  Maximum (1,WS(4),FP2,False,True)
+  SampleMaxMin (1,WD(4),FP2,False)
+  WindVector (1,WS(5),WD(5),FP2,False,0,0,2)
+  FieldNames("WS_40m_WVT,WS_40m_resultant_WVT,WD_40m_WVT,WD_40m_Std")
+  Maximum (1,WS(5),FP2,False,True)
+  SampleMaxMin (1,WD(5),FP2,False)
+  WindVector (1,WS(6),WD(6),FP2,False,0,0,2)
+  FieldNames("WS_50m_WVT,WS_50m_resultant_WVT,WD_50m_WVT,WD_50m_Std")
+  Maximum (1,WS(6),FP2,False,True)
+  SampleMaxMin (1,WD(6),FP2,False)
+  WindVector (1,WS(7),WD(7),FP2,False,0,0,2)
+  FieldNames("WS_60m_WVT,WS_60m_resultant_WVT,WD_60m_WVT,WD_60m_Std")
+  Maximum (1,WS(7),FP2,False,True)
+  SampleMaxMin (1,WD(7),FP2,False)
+  Totalize (1,Rain,FP2,False)
+  Average (9,SoilT(1),IEEE4,False)
+EndTable
+DataTable (day,1,-1)
+  DataInterval (0,1,Day,10)
+  Average (1,PTemp,FP2,False)
+  Average (1,Batt_volt,FP2,False)
+  Minimum (1,Batt_volt,FP2,False,True)
+  Average (1,P,IEEE4,False)
+  Maximum (1,P,IEEE4,False,True)
+  Minimum (1,P,IEEE4,False,True)
+  Average (7,Air_T(1),FP2,False)
+  Maximum (7,Air_T(1),FP2,False,True)
+  Minimum (7,Air_T(1),FP2,False,True)
+  Average (7,Air_RH(1),FP2,False)
+  Maximum (7,Air_RH(1),FP2,False,True)
+  Minimum (7,Air_RH(1),FP2,False,True)
+  Average (7,Air_e(1),FP2,False)
+  WindVector (1,WS(1),WD(1),FP2,False,0,0,0)
+  FieldNames("WS_1_5m_WVT,WD_1_5m_WVT,WD_1_5m_Std")
+  Maximum (1,WS(1),FP2,False,True)
+  SampleMaxMin (1,WD(1),FP2,False)
+  WindVector (1,WS(2),WD(2),FP2,False,0,0,0)
+  FieldNames("WS_10m_WVT,WD_10m_WVT,WD_10m_Std")
+  Maximum (1,WS(2),FP2,False,True)
+  SampleMaxMin (1,WD(2),FP2,False)
+  WindVector (1,WS(3),WD(3),FP2,False,0,0,0)
+  FieldNames("WS_20m_WVT,WD_20m_WVT,WD_20m_Std")
+  Maximum (1,WS(3),FP2,False,True)
+  SampleMaxMin (1,WD(3),FP2,False)
+  WindVector (1,WS(4),WD(4),FP2,False,0,0,0)
+  FieldNames("WS_30m_WVT,WD_30m_WVT,WD_30m_Std")
+  Maximum (1,WS(4),FP2,False,True)
+  SampleMaxMin (1,WD(4),FP2,False)
+  WindVector (1,WS(5),WD(5),FP2,False,0,0,0)
+  FieldNames("WS_40m_WVT,WD_40m_WVT,WD_40m_Std")
+  Maximum (1,WS(5),FP2,False,True)
+  SampleMaxMin (1,WD(5),FP2,False)
+  WindVector (1,WS(6),WD(6),FP2,False,0,0,0)
+  FieldNames("WS_50m_WVT,WD_50m_WVT,WD_50m_Std")
+  Maximum (1,WS(6),FP2,False,True)
+  SampleMaxMin (1,WD(6),FP2,False)
+  WindVector (1,WS(7),WD(7),FP2,False,0,0,0)
+  FieldNames("WS_60m_WVT,WD_60m_WVT,WD_60m_Std")
+  Maximum (1,WS(7),FP2,False,True)
+  SampleMaxMin (1,WD(7),FP2,False)
+  Totalize (1,Rain,FP2,False)
+  Average (9,SoilT(1),FP2,False)
+  Maximum (9,SoilT(1),FP2,False,True)
+  Minimum (9,SoilT(1),FP2,False,True)
+EndTable
+
+Sub TwoByteZero(data2,data2str As String *2)
+  data2str=data2
+  If data2=NAN Then data2str="//"
+  If Len(data2str)=1 Then data2str="0" +data2str
+  If Len(data2str)=0 Then data2str="00"
+EndSub
+Sub ThreeByteSpace(data3,data3str As String *3)
+  data3str = INT(data3+0.5)
+  If data3=NAN Then data3str="///"
+  If Len(data3str)=2 Then data3str=" " +data3str
+  If Len(data3str)=1 Then data3str="  " +data3str
+  If Len(data3str)=0 Then data3str="   "
+EndSub
+Sub ThreeByteSpace10(data3,data3str As String *3)
+  data3str=data3*10
+  data3str = INT(data3+0.5)
+  If data3=NAN Then data3str="///"
+  If Len(data3str)=2 Then data3str=" " +data3str
+  If Len(data3str)=1 Then data3str="  " +data3str
+  If Len(data3str)=0 Then data3str="   "
+EndSub
+Sub FourByteSpace(data4,data4str As String *4)
+  If data4=NAN Then data4str="////"
+  If Len(data4str)=3 Then data4str=" "+data4str
+  If Len(data4str)=2 Then data4str="  "+data4str
+  If Len(data4str)=1 Then data4str="   "+data4str
+  If Len(data4str)=0 Then data4str="    "
+EndSub
+Sub FourByteSpace10(data4,data4str As String *4)
+  data4=data4*10
+  data4str = INT(data4+0.5)
+  If data4=NAN Then data4str="////"
+  If Len(data4str)=3 Then data4str=" "+data4str
+  If Len(data4str)=2 Then data4str="  "+data4str
+  If Len(data4str)=1 Then data4str="   "+data4str
+  If Len(data4str)=0 Then data4str="    "
+EndSub
+Sub FiveByteSpace10(data5,data5str As String *5)
+  data5=data5*10
+  data5str = INT(data5+0.5)
+  If data5=NAN Then data5str="/////"
+  If Len(data5str)=4 Then data5str=" "+data5str
+  If Len(data5str)=3 Then data5str="  "+data5str
+  If Len(data5str)=2 Then data5str="   "+data5str
+  If Len(data5str)=1 Then data5str="    "+data5str
+  If Len(data5str)=0 Then data5str="      "
+EndSub
+Sub SevenByteZero(data7,data7str As String *7)
+  If data7=NAN Then data7str="///////"
+  If Len(data7str)=6 Then data7str="0" +data7str
+  If Len(data7str)=5 Then data7str="00" +data7str
+  If Len(data7str)=4 Then data7str="000" +data7str
+  If Len(data7str)=3 Then data7str="0000" +data7str
+  If Len(data7str)=2 Then data7str="00000" +data7str
+  If Len(data7str)=1 Then data7str="000000" +data7str
+  If Len(data7str)=0 Then data7str="0000000"
+EndSub
+
+BeginProg
+  CR = CHR(13)
+  LF = CHR(10)
+  IIiii=50772
+  StationLongitudeStr="1291157E"
+  StationLatitudeStr="481401N"
+  SW12 (SW12_1,1 )
+  Scan (5,Sec,0,0)
+    RealTime (fTime())
+
+    PanelTemp (PTemp,15000)
+    Battery (Batt_volt)
+
+    PulseCount (WS(1),1,P2,3,1,0.03997594,0.27)
+    PulseCount (WS(2),1,C3,3,1,0.03997594,0.27)
+    PulseCount (WS(3),1,C4,3,1,0.03997594,0.27)
+    PulseCount (WS(4),1,C5,3,1,0.03997594,0.27)
+    PulseCount (WS(5),1,C6,3,1,0.03997594,0.27)
+    PulseCount (WS(6),1,C7,3,1,0.03997594,0.27)
+    PulseCount (WS(7),1,C8,3,1,0.03997594,0.27)
+
+    PulseCount (Rain,1,P1,1,0,0.1,0)
+
+    PortSet (C1,1)
+    PulsePort (C2,35000)
+    VoltDiff (Air_T(1),1,mV5000,1,True,0,50,0.1,-40)
+    VoltDiff (Air_RH(1),1,mV5000,2,True,0,50,0.1,0)
+    VaporPressure (Air_e(1),Air_T(1),Air_RH(1))
+
+    PulsePort (C2,35000)
+    VoltDiff (Air_T(2),1,mV5000,1,True,0,50,0.1,-40)
+    VoltDiff (Air_RH(2),1,mV5000,2,True,0,50,0.1,0)
+    VaporPressure (Air_e(2),Air_T(2),Air_RH(2))
+
+    PulsePort (C2,35000)
+    VoltDiff (Air_T(3),1,mV5000,1,True,0,50,0.1,-40)
+    VoltDiff (Air_RH(3),1,mV5000,2,True,0,50,0.1,0)
+    VaporPressure (Air_e(3),Air_T(3),Air_RH(3))
+
+    PulsePort (C2,35000)
+    VoltDiff (Air_T(4),1,mV5000,1,True,0,50,0.1,-40)
+    VoltDiff (Air_RH(4),1,mV5000,2,True,0,50,0.1,0)
+    VaporPressure (Air_e(4),Air_T(4),Air_RH(4))
+
+    PulsePort (C2,35000)
+    VoltDiff (Air_T(5),1,mV5000,1,True,0,50,0.1,-40)
+    VoltDiff (Air_RH(5),1,mV5000,2,True,0,50,0.1,0)
+    VaporPressure (Air_e(5),Air_T(5),Air_RH(5))
+
+    PulsePort (C2,35000)
+    VoltDiff (Air_T(6),1,mV5000,1,True,0,50,0.1,-40)
+    VoltDiff (Air_RH(6),1,mV5000,2,True,0,50,0.1,0)
+    VaporPressure (Air_e(6),Air_T(6),Air_RH(6))
+
+    PulsePort (C2,35000)
+    VoltDiff (Air_T(7),1,mV5000,1,True,0,50,0.1,-40)
+    VoltDiff (Air_RH(7),1,mV5000,2,True,0,50,0.1,0)
+    VaporPressure (Air_e(7),Air_T(7),Air_RH(7))
+
+    PulsePort (C2,35000)
+    Therm109 (SoilT(1),4,1,Vx1,0,50,1.0,0)
+    PulsePort (C2,35000)
+    Therm109 (SoilT(5),4,1,Vx2,0,50,1.0,0)
+    PulsePort (C2,35000)
+    Therm109 (SoilT(9),1,1,Vx3,0,50,1.0,0)
+    BrHalf(WD(1),3,mV5000,2,Vx3,3,2500,True,0,50,360,0)
+    PulsePort (C2,35000)
+    BrHalf(WD(4),4,mV5000,1,Vx4,4,2500,True,0,50,360,0)
+
+    PortSet (C1,0)
+
+    For n =1 To 7
+      If WD(n) >=360 OR WD(n)<0 Then WD(n)=0
+      If Air_RH(n) >100 AND Air_RH(n)<103 Then Air_RH(n)=100
+      Air_e(n)=Air_e(n)*10
+    Next n
+
+    VoltSe (P,1,mV5000,5,1,0,50,0.12,500)
+
+    CallTable five_sec
+    CallTable one_min
+    CallTable halfhour
+    CallTable day
+  NextScan
+
+  SlowSequence
+  Scan (10,Sec,0,0)
+    Call TwoByteZero(fTime(2),LLoggerMOStr)
+    Call TwoByteZero(fTime(3),LLoggerDDStr)
+    fTime(3)= fTime(3)+1
+    If fTime(2)= 12 Then
+      If fTime(3) =32 Then
+        fTime(3) = 1
+        fTime(2) = 1
+        fTime(1) = fTime(1) + 1
+      EndIf
+    EndIf
+    If fTime(2)= 1 OR fTime(2)= 3 OR fTime(2)= 5 OR fTime(2)= 7 OR fTime(2)= 8 OR fTime(2)= 10 Then
+      If fTime(3) =32 Then
+        fTime(3) = 1
+        fTime(2) = fTime(2)+1
+      EndIf
+    EndIf
+    If fTime(2)= 4 OR fTime(2)= 6 OR fTime(2)= 9 OR fTime(2)= 11 Then
+      If fTime(3) = 31 Then
+        fTime(3) = 1
+        fTime(2) = fTime(2)+1
+      EndIf
+    EndIf
+
+    If fTime(1) MOD 4 <> 0 Then
+      LeapYear = false
+    Else If fTime(1) MOD 100 = 0 AND  fTime(1) MOD 400 <> 0 Then
+      LeapYear = false
+    Else
+      LeapYear = true
+    EndIf
+
+    If fTime(2)= 2 AND LeapYear AND fTime(3) = 30 Then
+      fTime(3) = 1
+      fTime(2) = fTime(2)+1
+    Else If fTime(2)= 2 AND LeapYear = false AND fTime(3) = 29 Then
+      fTime(3) = 1
+      fTime(2) = fTime(2)+1
+    EndIf
+
+    Call TwoByteZero(f_LoggerMonth,LoggerMOStr)
+    Call TwoByteZero(f_LoggerDOM,LoggerDDStr)
+    Call TwoByteZero(f_LoggerHour,LoggerHHStr)
+    Call TwoByteZero(f_LoggerMinute,LoggerMMStr)
+    Call TwoByteZero(f_LoggerSecond,LoggerSSStr)
+    LoggerYYYYStr=f_LoggerYear
+    ltimestr(1) = LoggerYYYYStr
+    ltimestr(2) = LoggerMOStr
+    ltimestr(3) = LoggerDDStr
+    ltimestr(4) = LoggerHHStr
+    ltimestr(5) = LoggerMMStr
+    ltimestr(6) = LoggerSSStr
+
+    If IfTime (1201,1440,Min) Then
+      MindataFileName="CRD:Z_SURF_PBL_VG_M_"+IIiii+"_"+ltimestr(1)+ltimestr(2)+ltimestr(3)+".txt"
+      Minhandle = FileOpen (MindataFileName,"a",-1)
+      MinHeadStr = IIiii + ltimestr(1) + ltimestr(2) + ltimestr(3) + StationLongitudeStr  + StationLatitudeStr +"0003670" _
+      +"07"+"00015"+"00100"+"00200"+"00300"+"00400"+"00500"+"00600"+"/////"+"/////"+"/////"
+      MinHeadStr = MinHeadStr +"--------------------" + "--------------------" + "--------------------" + "--------------------" _
+      +"--------------------" + "--------------------" + "--------------------" + "--------------------" + "--------------------" _
+      +"--------------------" + "--------------------" +  "------------------" +"V1.00" + CR + LF
+      FileWrite (Minhandle,MinHeadStr,0)
+      CloseMinStat=FileClose (Minhandle)
+    EndIf
+
+    If IfTime (10,60,Sec) Then
+      MinStoreStr= ""
+      MinStoreStr=ltimestr(4)+":"+ltimestr(5)+"////////////////////////////////////"
+
+      GetRecord (Mindata(1),one_min,1)
+      Call FiveByteSpace10  (Mindata(3),MinStr(3))
+      Call FiveByteSpace10  (Mindata(53),MinStr(53))
+
+      'rain and Soil_T
+      For m = 55 To 62
+        Call FourByteSpace10  (Mindata(m),MinStr(m))
+        MinStoreStr = MinStoreStr + MinStr(m)
+      Next m
+      MinStoreStr=MinStoreStr+"////////////////////////////////"
+      For j = 1 To 7
+        Call FourByteSpace10  (Mindata(j+3),MinStr(j+3))
+        Call ThreeByteSpace  (Mindata(j+10),MinStr(j+10))
+        Call ThreeByteSpace10  (Mindata(j+17),MinStr(j+17))
+        Call FourByteSpace10  (Mindata(j*4+21),MinStr(j*4+21))
+        Call ThreeByteSpace  (Mindata(j*4+22),MinStr(j*4+22))
+        Call FourByteSpace10  (Mindata(j*4+23),MinStr(j*4+23))
+        Call ThreeByteSpace  (Mindata(j*4+24),MinStr(j*4+24))
+        MinStoreStr = MinStoreStr + MinStr(j*4+21) + MinStr(j*4+22) + "///////" + MinStr(j*4+23) _
+        + MinStr(j*4+24) + MinStr(j+3) + MinStr(j+10) + MinStr(j+17)
+      Next j
+
+      end_symbol=ltimestr(4)+":"+ltimestr(5)
+      If end_symbol="20:00" Then
+        MinStoreStr=MinStoreStr+MinStr(3)+MinStr(53)+"///"+"="+CR+LF
+      Else
+        MinStoreStr=MinStoreStr+MinStr(3)+MinStr(53)+"///"+CR+LF
+      EndIf
+
+      Minhandle=FileOpen (MindataFileName,"a",-1)
+      FileWrite (Minhandle,MinStoreStr,0)
+      CloseMinStat=FileClose (Minhandle)
+    EndIf
+
+    If HourdataFileName="" AND MindataFileName="" Then      
+      MindataFileName="CRD:Z_SURF_PBL_VG_M_"+IIiii+"_"+ltimestr(1)+ltimestr(2)+LLoggerDDStr+".txt"
+      Minhandle = FileOpen (MindataFileName,"a",-1)
+      MinHeadStr = IIiii + ltimestr(1) + ltimestr(2) + LLoggerDDStr + StationLongitudeStr  + StationLatitudeStr +"0003670" _
+      +"07"+"00015"+"00100"+"00200"+"00300"+"00400"+"00500"+"00600"+"/////"+"/////"+"/////"
+      MinHeadStr = MinHeadStr +"--------------------" + "--------------------" + "--------------------" + "--------------------" _
+      +"--------------------" + "--------------------" + "--------------------" + "--------------------" + "--------------------" _
+      +"--------------------" + "--------------------" +  "------------------" +"V1.00" + CR + LF
+      FileWrite (Minhandle,MinHeadStr,0)
+      CloseMinStat=FileClose (Minhandle)
+      
+      HourdataFileName="CRD:Z_SURF_PBL_VG_FT_"+IIiii+"_"+ltimestr(1)+ltimestr(2)+".txt"
+      Hourhandle = FileOpen (HourdataFileName,"a",-1)
+      HourHeadStr = IIiii + ltimestr(1) + ltimestr(2) + StationLongitudeStr  + StationLatitudeStr +"0003670" _
+      +"07"+"00015"+"00100"+"00200"+"00300"+"00400"+"00500"+"00600"+"///////////0000001111111100000000" _
+      +"11111111111111111111110"
+      For c = 1 To 31
+        HourHeadStr = HourHeadStr + "--------------------"
+      Next c
+      HourHeadStr = HourHeadStr + "---" + "V1.00" + CR + LF
+      FileWrite (Hourhandle,HourHeadStr,0)
+      CloseHourStat=FileClose (Hourhandle)
+    EndIf
+    If IfTime (1201,1440,Min) AND ltimestr(3)="01" Then     
+        HourdataFileName="CRD:Z_SURF_PBL_VG_FT_"+IIiii+"_"+ltimestr(1)+ltimestr(2)+".txt"
+        Hourhandle = FileOpen (HourdataFileName,"a",-1)
+        HourHeadStr = IIiii + ltimestr(1) + ltimestr(2) + StationLongitudeStr  + StationLatitudeStr +"0003670" _
+        +"07"+"00015"+"00100"+"00200"+"00300"+"00400"+"00500"+"00600"+"///////////0000001111111100000000" _
+        +"11111111111111111111110"
+        For c = 1 To 31
+          HourHeadStr = HourHeadStr + "--------------------"
+        Next c
+        HourHeadStr = HourHeadStr + "---" + "V1.00" + CR + LF
+        FileWrite (Hourhandle,HourHeadStr,0)
+        CloseHourStat=FileClose (Hourhandle)     
+    EndIf
+
+    If IfTime (30,1800,Sec) Then
+      HourStoreStr= ""
+      HourStoreStr=ltimestr(1)+"-"+LLoggerMOStr+"-"+LLoggerDDStr+" "+ltimestr(4)+":"+ltimestr(5)+"//////////////////////////////////////////////////" _
+      + "////////////////////////////////////////////////////////////////"
+      GetRecord (Hourdata(1),halfhour,1)
+
+      For nn=122 To 129
+        Call FourByteSpace10 (Hourdata(nn),HourStr(nn))
+        HourStoreStr = HourStoreStr + HourStr(nn)
+      Next nn
+
+      HourStoreStr = HourStoreStr + "////"
+
+      For jj= 1 To 7
+        Call FourByteSpace10 (Hourdata(jj*7+64),HourStr(jj*7+64))
+        Call FourByteSpace10 (Hourdata(jj*7+65),HourStr(jj*7+65))
+        Call FourByteSpace (Hourdata(jj*7+66),HourStr(jj*7+66))
+        Call SevenByteZero (Hourdata(jj*7+67),HourStr(jj*7+67))
+        Call FourByteSpace10 (Hourdata(jj*7+68),HourStr(jj*7+68))
+        Call ThreeByteSpace (Hourdata(jj*7+70),HourStr(jj*7+70))
+
+        SplitStr (HourStr(jj*7+69),Hourdata(jj*7+69)," ",1,4)
+        HourStr(jj*7+69) = Left(HourStr(jj*7+69),5)
+        HourStr(jj*7+69) = Left (HourStr(jj*7+69),2) + Right (HourStr(jj*7+69),2)
+
+        SplitStr (HourStr(jj+21),Hourdata(jj+21)," ",1,4)
+        HourStr(jj+21) = Left(HourStr(jj+21),5)
+        HourStr(jj+21) = Left (HourStr(jj+21),2) + Right (HourStr(jj+21),2)
+
+        SplitStr (HourStr(jj+35),Hourdata(jj+35)," ",1,4)
+        HourStr(jj+35) = Left(HourStr(jj+35),5)
+        HourStr(jj+35) = Left (HourStr(jj+35),2) + Right (HourStr(jj+35),2)
+
+        SplitStr (HourStr(jj+56),Hourdata(jj+56)," ",1,4)
+        HourStr(jj+56) = Left(HourStr(jj+56),5)
+        HourStr(jj+56) = Left (HourStr(jj+56),2) + Right (HourStr(jj+56),2)
+
+        Call FourByteSpace10 (Hourdata(jj+7),HourStr(jj+7))
+        Call FourByteSpace10 (Hourdata(jj+14),HourStr(jj+14))
+        Call FourByteSpace10 (Hourdata(jj+28),HourStr(jj+28))
+        Call ThreeByteSpace (Hourdata(jj+42),HourStr(jj+42))
+        Call ThreeByteSpace (Hourdata(jj+49),HourStr(jj+49))
+        Call ThreeByteSpace10 (Hourdata(jj+63),HourStr(jj+63))
+
+        HourStoreStr = HourStoreStr + HourStr(jj*7+64) + HourStr(jj*7+65) + HourStr(jj*7+66) + HourStr(jj*7+67) _
+        + HourStr(jj*7+68) + HourStr(jj*7+70) + HourStr(jj*7+69) + "///////////"
+        HourStoreStr = HourStoreStr + HourStr(jj+7) + HourStr(jj+14) + HourStr(jj+21) + HourStr(jj+28) _
+        + HourStr(jj+35) + HourStr(jj+42) + HourStr(jj+49) + HourStr(jj+56) + HourStr(jj+63)
+      Next jj
+
+      Call FiveByteSpace10 (Hourdata(3),HourStr(3))
+      Call FiveByteSpace10 (Hourdata(4),HourStr(4))
+      Call FiveByteSpace10 (Hourdata(6),HourStr(6))
+      SplitStr (HourStr(5),Hourdata(5)," ",1,4)
+      HourStr(5) = Left(HourStr(5),5)
+      HourStr(5) = Left (HourStr(5),2) + Right (HourStr(5),2)
+      SplitStr (HourStr(7),Hourdata(7)," ",1,4)
+      HourStr(7) = Left(HourStr(7),5)
+      HourStr(7) = Left (HourStr(7),2) + Right (HourStr(7),2)
+
+      Call FourByteSpace10 (Hourdata(120),HourStr(120))
+
+      HourStoreStr = HourStoreStr + HourStr(3) + HourStr(4) + HourStr(5) + HourStr(6) + HourStr(7) + HourStr(120) + "///"
+
+      end_symbol_month=LLoggerMOStr+LLoggerDDStr+" "+ltimestr(4)+":"+ltimestr(5)
+      If end_symbol_month="0131 20:00" OR end_symbol_month="0331 20:00" OR end_symbol_month="0531 20:00" OR end_symbol_month="0731 20:00" OR end_symbol_month="0831 20:00" _
+        OR end_symbol_month="1031 20:00" OR end_symbol_month="1231 20:00" OR end_symbol_month="0430 20:00" OR end_symbol_month="0630 20:00" OR end_symbol_month="0930 20:00" _
+        OR end_symbol_month="1130 20:00" Then
+        HourStoreStr = HourStoreStr + "=" + CR + LF
+      Else If end_symbol_month = "0228 20:00" AND LeapYear=false Then
+        HourStoreStr = HourStoreStr + "=" + CR + LF
+      Else If end_symbol_month = "0229 20:00" AND LeapYear=true Then
+        HourStoreStr = HourStoreStr + "=" + CR + LF
+      Else
+        HourStoreStr = HourStoreStr + CR + LF
+      EndIf
+
+      Hourhandle=FileOpen (HourdataFileName,"a",-1)
+      FileWrite (Hourhandle,HourStoreStr,0)
+      CloseHourStat=FileClose (Hourhandle)
+    EndIf
+  NextScan
+EndProg
+
