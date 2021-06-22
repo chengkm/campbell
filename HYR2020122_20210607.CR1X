@@ -52,7 +52,6 @@ Dim LoggerMMStr As String
 Dim LoggerSSStr As String
 Public ltimestr(6) As String
 Public MindataFileName As String *50,HourdataFileName As String *50,
-'Public LastMindataFileName As String *50
 Dim Minhandle As Long,Hourhandle As Long
 Dim CloseMinStat,CloseHourStat
 Public MinHeadStr  As String *400,MinStoreStr As String *1000,HourHeadStr  As String *1000,HourStoreStr As String *1000
